@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://lgpsvuymjcttywobieuz.supabase.co wss://lgpsvuymjcttywobieuz.supabase.co; form-action 'self'; base-uri 'self'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>bs closet — Sistema</title>
+<style>
+:root{--preto:#1f1f1f;--cinza-escuro:#4a4a4a;--cinza:#8c8c8c;--cinza-claro:#e6e6e6;--cinza-fundo:#f4f4f4;--branco:#fff;--ok:#3d6b4f;--alerta:#8a5a2b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--cinza-fundo);color:var(--preto);font-size:14px}
+header{background:var(--preto);color:var(--branco);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px;letter-spacing:2px;font-weight:600}
+header button{background:none;border:1px solid #555;color:var(--branco);padding:6px 12px;border-radius:6px;cursor:pointer}
+nav{background:var(--branco);border-bottom:1px solid var(--cinza-claro);display:flex;gap:4px;padding:0 16px;overflow-x:auto}
+nav button{background:none;border:none;padding:14px;cursor:pointer;color:var(--cinza-escuro);border-bottom:2px solid transparent;white-space:nowrap}
+nav button.ativo{color:var(--preto);border-bottom-color:var(--preto);font-weight:600}
+main{padding:24px;max-width:1200px;margin:0 auto}
+section{display:none}section.ativo{display:block}
+h2{font-size:15px;margin:20px 0 12px;letter-spacing:1px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--branco);border:1px solid var(--cinza-claro);border-radius:8px;padding:16px}
+.card small{color:var(--cinza);display:block;margin-bottom:6px;text-transform:uppercase;font-size:11px;letter-spacing:1px}
+.card strong{font-size:20px;font-weight:600}
+.painel{background:var(--branco);border:1px solid var(--cinza-claro);border-radius:8px;padding:16px;margin-bottom:16px}
+form.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--cinza-escuro)}
+input,select{padding:8px 10px;border:1px solid var(--cinza-claro);border-radius:6px;font-size:14px;background:var(--branco)}
+input:focus,select:focus{outline:none;border-color:var(--cinza)}
+button.acao{background:var(--preto);color:var(--branco);border:none;padding:9px 16px;border-radius:6px;cursor:pointer}
+button.acao:hover{background:var(--cinza-escuro)}
+button.acao:disabled{opacity:.5;cursor:default}
+button.sec{background:var(--branco);color:var(--preto);border:1px solid var(--cinza-claro);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:12px}
+table{width:100%;border-collapse:collapse;background:var(--branco);border:1px solid var(--cinza-claro)}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--cinza-claro)}
+th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-transform:uppercase;letter-spacing:.5px}
+.num{text-align:right}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--cinza-claro);color:var(--cinza-escuro)}
+.tag.ok{background:var(--ok);color:var(--branco)}
+.tag.alerta{background:var(--alerta);color:var(--branco)}
+.vazio{color:var(--cinza);padding:14px;text-align:center}
+.erro{color:#a03030;margin-top:8px;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+#login{max-width:340px;margin:80px auto;background:var(--branco);border:1px solid var(--cinza-claro);border-radius:10px;padding:28px}
+#login h1{font-size:18px;letter-spacing:2px;margin-bottom:18px;text-align:center}
+#login form{display:flex;flex-direction:column;gap:12px}
+#login button{width:100%}
+.carrinho-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--cinza-claro)}
+</style>
+</head>
+<body>
+
+<div id="login" style="display:none">
+  <h1>BS CLOSET</h1>
+  <form id="form-login">
+    <label>E-mail<input name="email" type="email" required autocomplete="username"></label>
+    <label>Senha<input name="senha" type="password" required autocomplete="current-password"></label>
+    <button class="acao" type="submit">Entrar</button>
+    <div class="erro" id="erro-login"></div>
+  </form>
+</div>
+
+<div id="app" style="display:none">
+  <header>
+    <h1>BS CLOSET</h1>
+    <div><span id="usuario" style="margin-right:12px;font-size:12px"></span><button id="sair">Sair</button></div>
+  </header>
+  <nav>
+    <button class="ativo" data-aba="painel">Painel</button>
+    <button data-aba="pdv">Vendas (PDV)</button>
+    <button data-aba="produtos">Produtos</button>
+    <button data-aba="clientes">Clientes</button>
+    <button data-aba="despesas">Despesas</button>
+  </nav>
+  <main>
+
+  <section id="painel" class="ativo">
+    <h2>VISÃO GERAL</h2>
+    <div class="cards">
+      <div class="card"><small>Vendas hoje</small><strong id="k-hoje">R$ 0</strong></div>
+      <div class="card"><small>Vendas no mês</small><strong id="k-mes">R$ 0</strong></div>
+      <div class="card"><small>Ticket médio</small><strong id="k-ticket">R$ 0</strong></div>
+      <div class="card"><small>Peças em estoque</small><strong id="k-estoque">0</strong></div>
+      <div class="card"><small>Lucro bruto (mês)</small><strong id="k-lucro">R$ 0</strong></div>
+      <div class="card"><small>Despesas (mês)</small><strong id="k-desp">R$ 0</strong></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <h2>ÚLTIMAS VENDAS</h2>
+        <table><thead><tr><th>Data</th><th>Cliente</th><th class="num">Total</th></tr></thead><tbody id="t-ultimas"></tbody></table>
+      </div>
+      <div>
+        <h2>ESTOQUE BAIXO</h2>
+        <table><thead><tr><th>Produto</th><th>SKU</th><th class="num">Qtd</th></tr></thead><tbody id="t-baixo"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <section id="pdv">
+    <h2>NOVA VENDA</h2>
+    <div class="painel">
+      <form class="grade" id="form-item">
+        <label>Produto<select id="sel-produto"></select></label>
+        <label>Qtd<input id="inp-qtd" type="number" min="1" value="1"></label>
+        <button class="acao" type="submit">Adicionar</button>
+      </form>
+    </div>
+    <div class="painel">
+      <div id="carrinho"></div>
+      <form class="grade" id="form-venda" style="margin-top:12px">
+        <label>Cliente<select id="sel-cliente"><option value="">Consumidor final</option></select></label>
+        <label>Pagamento
+          <select id="sel-pag">
+            <option value="pix">Pix</option><option value="credito">Cartão crédito</option>
+            <option value="debito">Cartão débito</option><option value="dinheiro">Dinheiro</option>
+          </select>
+        </label>
+        <label>Desconto (%)<input id="inp-desc" type="number" min="0" max="100" value="0"></label>
+        <button class="acao" type="submit">Finalizar venda</button>
+      </form>
+      <div class="erro" id="erro-venda"></div>
+    </div>
+  </section>
+
+  <section id="produtos">
+    <h2>CADASTRAR PRODUTO</h2>
+    <div class="painel">
+      <form class="grade" id="form-produto">
+        <label>SKU<input name="sku" required></label>
+        <label>Nome<input name="nome" required></label>
+        <label>Categoria<select name="categoria"><option>Vestidos</option><option>Blusas</option><option>Calças</option><option>Saias</option><option>Casacos</option><option>Acessórios</option><option>Calçados</option></select></label>
+        <label>Tamanho<select name="tamanho"><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>Único</option></select></label>
+        <label>Cor<select name="cor"><option>Branco</option><option>Cinza</option><option>Preto</option><option>Off-white</option><option>Outra</option></select></label>
+        <label>Custo (R$)<input name="custo" type="number" step="0.01" min="0" required></label>
+        <label>Preço (R$)<input name="preco" type="number" step="0.01" min="0" required></label>
+        <label>Qtd inicial<input name="qtd" type="number" min="0" value="0" required></label>
+        <label>Estoque mínimo<input name="minimo" type="number" min="0" value="2" required></label>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+      <div class="erro" id="erro-produto"></div>
+    </div>
+    <table><thead><tr><th>SKU</th><th>Produto</th><th>Tam.</th><th>Cor</th><th class="num">Custo</th><th class="num">Preço</th><th class="num">Qtd</th><th>Status</th><th></th></tr></thead>
+    <tbody id="t-produtos"></tbody></table>
+  </section>
+
+  <section id="clientes">
+    <h2>CADASTRAR CLIENTE</h2>
+    <div class="painel">
+      <form class="grade" id="form-cliente">
+        <label>Nome<input name="nome" required></label>
+        <label>WhatsApp<input name="whatsapp"></label>
+        <label>E-mail<input name="email" type="email"></label>
+        <label>Aniversário<input name="nascimento" type="date"></label>
+        <label>Estilo<input name="estilo" placeholder="Ex: minimalista"></label>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+      <div class="erro" id="erro-cliente"></div>
+    </div>
+    <table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Estilo</th><th>Cadastro</th></tr></thead><tbody id="t-clientes"></tbody></table>
+  </section>
+
+  <section id="despesas">
+    <h2>LANÇAR DESPESA</h2>
+    <div class="painel">
+      <form class="grade" id="form-despesa">
+        <label>Descrição<input name="descricao" required></label>
+        <label>Categoria<select name="categoria"><option>Aluguel</option><option>Energia/Água/Internet</option><option>Fornecedores</option><option>Marketing</option><option>Embalagens</option><option>Salários</option><option>Impostos</option><option>Outros</option></select></label>
+        <label>Valor (R$)<input name="valor" type="number" step="0.01" min="0" required></label>
+        <label>Data<input name="data" type="date" required></label>
+        <button class="acao" type="submit">Lançar</button>
+      </form>
+      <div class="erro" id="erro-despesa"></div>
+    </div>
+    <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="num">Valor</th></tr></thead><tbody id="t-despesas"></tbody></table>
+  </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://lgpsvuymjcttywobieuz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_HEZik2YoNefRcVADnmM4Xw__M8gBX6N';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const fmt = v => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+const hojeISO = () => new Date().toISOString().slice(0, 10);
+const mesISO = () => new Date().toISOString().slice(0, 7);
+const carrinho = [];
+let produtosCache = [];
+
+// ===== AUTH =====
+async function entrar(e) {
+  e.preventDefault();
+  $('erro-login').textContent = '';
+  const f = Object.fromEntries(new FormData(e.target));
+  const { error } = await sb.auth.signInWithPassword({ email: f.email, password: f.senha });
+  if (error) $('erro-login').textContent = 'E-mail ou senha inválidos.';
+}
+$('form-login').onsubmit = entrar;
+$('sair').onclick = () => sb.auth.signOut();
+
+async function verificarSessao() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return mostrarLogin();
+  const { data: perfil } = await sb.from('perfis').select('nome,ativo,funcao').eq('id', session.user.id).single();
+  if (!perfil || !perfil.ativo) {
+    await sb.auth.signOut();
+    $('erro-login').textContent = 'Acesso pendente. Peça ativação ao administrador.';
+    return mostrarLogin();
+  }
+  $('usuario').textContent = perfil.nome + ' · ' + perfil.funcao;
+  $('login').style.display = 'none';
+  $('app').style.display = 'block';
+  await carregarTudo();
+}
+function mostrarLogin() { $('app').style.display = 'none'; $('login').style.display = 'block'; }
+sb.auth.onAuthStateChange((evento) => {
+  if (evento === 'SIGNED_IN') verificarSessao();
+  if (evento === 'SIGNED_OUT') mostrarLogin();
+});
+
+// ===== NAVEGAÇÃO =====
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.remove('ativo'));
+  document.querySelectorAll('section').forEach(x => x.classList.remove('ativo'));
+  b.classList.add('ativo');
+  $(b.dataset.aba).classList.add('ativo');
+});
+
+// ===== CARGA =====
+async function carregarTudo() {
+  await Promise.all([carregarProdutos(), carregarClientes(), carregarDespesas(), carregarPainel()]);
+}
+
+async function carregarProdutos() {
+  const { data, error } = await sb.from('produtos').select('*').eq('ativo', true).order('nome');
+  if (error) return console.error(error);
+  produtosCache = data;
+  $('t-produtos').innerHTML = data.length ? data.map(p => {
+    const baixo = p.qtd <= p.estoque_minimo;
+    const status = p.qtd === 0 ? ['Esgotado','alerta'] : baixo ? ['Estoque baixo','alerta'] : ['OK','ok'];
+    return `<tr><td>${esc(p.sku)}</td><td>${esc(p.nome)}</td><td>${p.tamanho}</td><td>${p.cor}</td>
+      <td class="num">${fmt(p.custo)}</td><td class="num">${fmt(p.preco)}</td><td class="num">${p.qtd}</td>
+      <td><span class="tag ${status[1]}">${status[0]}</span></td>
+      <td><button class="sec" onclick="ajustarEstoque(${p.id}, 1)">+1</button> <button class="sec" onclick="ajustarEstoque(${p.id}, -1)">-1</button></td></tr>`;
+  }).join('') : '<tr><td colspan="9" class="vazio">Nenhum produto.</td></tr>';
+
+  const disp = data.filter(p => p.qtd > 0);
+  $('sel-produto').innerHTML = disp.length
+    ? disp.map(p => `<option value="${p.id}">${esc(p.sku)} — ${esc(p.nome)} ${p.tamanho} ${p.cor} (${p.qtd} un) · ${fmt(p.preco)}</option>`).join('')
+    : '<option value="">Sem estoque disponível</option>';
+}
+
+async function carregarClientes() {
+  const { data } = await sb.from('clientes').select('*').order('nome');
+  $('t-clientes').innerHTML = (data || []).map(c =>
+    `<tr><td>${esc(c.nome)}</td><td>${esc(c.whatsapp)}</td><td>${esc(c.estilo)}</td><td>${new Date(c.created_at).toLocaleDateString('pt-BR')}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="vazio">Nenhum cliente.</td></tr>';
+  $('sel-cliente').innerHTML = '<option value="">Consumidor final</option>' +
+    (data || []).map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+}
+
+async function carregarDespesas() {
+  const { data } = await sb.from('despesas').select('*').order('data', { ascending: false }).limit(200);
+  $('t-despesas').innerHTML = (data || []).map(d =>
+    `<tr><td>${d.data}</td><td>${esc(d.descricao)}</td><td>${d.categoria}</td><td class="num">${fmt(d.valor)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="vazio">Nenhuma despesa.</td></tr>';
+}
+
+async function carregarPainel() {
+  const { data: vendas } = await sb.from('vendas').select('total,custo_total,created_at,clientes(nome)').order('created_at', { ascending: false }).limit(500);
+  const { data: despesas } = await sb.from('despesas').select('valor,data');
+  const { data: prods } = await sb.from('produtos').select('qtd,nome,sku,estoque_minimo').eq('ativo', true);
+  const v = vendas || [];
+  const hj = hojeISO(), mes = mesISO();
+  const vHoje = v.filter(x => x.created_at.slice(0, 10) === hj).reduce((s, x) => s + Number(x.total), 0);
+  const vMes = v.filter(x => x.created_at.slice(0, 7) === mes);
+  const totMes = vMes.reduce((s, x) => s + Number(x.total), 0);
+  const cmvMes = vMes.reduce((s, x) => s + Number(x.custo_total), 0);
+  const despMes = (despesas || []).filter(d => d.data.slice(0, 7) === mes).reduce((s, d) => s + Number(d.valor), 0);
+  $('k-hoje').textContent = fmt(vHoje);
+  $('k-mes').textContent = fmt(totMes);
+  $('k-ticket').textContent = fmt(vMes.length ? totMes / vMes.length : 0);
+  $('k-estoque').textContent = (prods || []).reduce((s, p) => s + p.qtd, 0);
+  $('k-lucro').textContent = fmt(totMes - cmvMes);
+  $('k-desp').textContent = fmt(despMes);
+  $('t-ultimas').innerHTML = v.slice(0, 6).map(x =>
+    `<tr><td>${new Date(x.created_at).toLocaleString('pt-BR')}</td><td>${esc(x.clientes?.nome || 'Consumidor final')}</td><td class="num">${fmt(x.total)}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="vazio">Sem vendas.</td></tr>';
+  $('t-baixo').innerHTML = (prods || []).filter(p => p.qtd <= p.estoque_minimo).map(p =>
+    `<tr><td>${esc(p.nome)}</td><td>${esc(p.sku)}</td><td class="num">${p.qtd}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="vazio">Estoque em dia.</td></tr>';
+}
+
+// ===== PRODUTOS =====
+$('form-produto').onsubmit = async e => {
+  e.preventDefault();
+  $('erro-produto').textContent = '';
+  const f = Object.fromEntries(new FormData(e.target));
+  const { error } = await sb.from('produtos').insert({
+    sku: f.sku.trim(), nome: f.nome.trim(), categoria: f.categoria, tamanho: f.tamanho, cor: f.cor,
+    custo: +f.custo, preco: +f.preco, qtd: +f.qtd, estoque_minimo: +f.minimo
+  });
+  if (error) return $('erro-produto').textContent = error.message;
+  e.target.reset();
+  await carregarProdutos(); await carregarPainel();
+};
+
+window.ajustarEstoque = async (id, delta) => {
+  const p = produtosCache.find(x => x.id === id);
+  if (!p) return;
+  const nova = Math.max(0, p.qtd + delta);
+  const { error } = await sb.from('produtos').update({ qtd: nova }).eq('id', id);
+  if (error) return alert(error.message);
+  await carregarProdutos(); await carregarPainel();
+};
+
+// ===== PDV =====
+function renderCarrinho() {
+  if (!carrinho.length) { $('carrinho').innerHTML = '<div class="vazio">Carrinho vazio.</div>'; return; }
+  let total = 0;
+  $('carrinho').innerHTML = carrinho.map((it, i) => {
+    total += it.preco * it.qtd;
+    return `<div class="carrinho-item"><span>${it.qtd}x ${esc(it.nome)} (${esc(it.sku)})</span>
+      <span>${fmt(it.preco * it.qtd)} <button class="sec" onclick="removerItem(${i})">✕</button></span></div>`;
+  }).join('') + `<div style="text-align:right;margin-top:8px"><strong>Subtotal: ${fmt(total)}</strong></div>`;
+}
+window.removerItem = i => { carrinho.splice(i, 1); renderCarrinho(); };
+
+$('form-item').onsubmit = e => {
+  e.preventDefault();
+  $('erro-venda').textContent = '';
+  const id = +$('sel-produto').value;
+  const qtd = +$('inp-qtd').value;
+  const p = produtosCache.find(x => x.id === id);
+  if (!p) return;
+  const jaNoCarrinho = carrinho.filter(c => c.produto_id === id).reduce((s, c) => s + c.qtd, 0);
+  if (qtd < 1 || jaNoCarrinho + qtd > p.qtd) return $('erro-venda').textContent = `Estoque disponível: ${p.qtd - jaNoCarrinho}.`;
+  const existente = carrinho.find(c => c.produto_id === id);
+  if (existente) existente.qtd += qtd;
+  else carrinho.push({ produto_id: id, qtd, nome: p.nome, sku: p.sku, preco: Number(p.preco) });
+  renderCarrinho();
+};
+
+$('form-venda').onsubmit = async e => {
+  e.preventDefault();
+  $('erro-venda').textContent = '';
+  if (!carrinho.length) return $('erro-venda').textContent = 'Adicione itens.';
+  const btn = e.target.querySelector('button'); btn.disabled = true;
+  const { error } = await sb.rpc('registrar_venda', {
+    p_cliente_id: $('sel-cliente').value ? +$('sel-cliente').value : null,
+    p_pagamento: $('sel-pag').value,
+    p_desconto: +$('inp-desc').value || 0,
+    p_itens: carrinho.map(c => ({ produto_id: c.produto_id, qtd: c.qtd }))
+  });
+  btn.disabled = false;
+  if (error) return $('erro-venda').textContent = error.message;
+  carrinho.length = 0;
+  $('inp-desc').value = 0;
+  renderCarrinho();
+  await carregarProdutos(); await carregarPainel();
+  alert('Venda registrada.');
+};
+
+// ===== CLIENTES =====
+$('form-cliente').onsubmit = async e => {
+  e.preventDefault();
+  $('erro-cliente').textContent = '';
+  const f = Object.fromEntries(new FormData(e.target));
+  const { error } = await sb.from('clientes').insert({
+    nome: f.nome.trim(), whatsapp: f.whatsapp || null, email: f.email || null,
+    nascimento: f.nascimento || null, estilo: f.estilo || null
+  });
+  if (error) return $('erro-cliente').textContent = error.message;
+  e.target.reset();
+  await carregarClientes();
+};
+
+// ===== DESPESAS =====
+$('form-despesa').onsubmit = async e => {
+  e.preventDefault();
+  $('erro-despesa').textContent = '';
+  const f = Object.fromEntries(new FormData(e.target));
+  const { error } = await sb.from('despesas').insert({ descricao: f.descricao, categoria: f.categoria, valor: +f.valor, data: f.data });
+  if (error) return $('erro-despesa').textContent = error.message;
+  e.target.reset();
+  await carregarDespesas(); await carregarPainel();
+};
+
+verificarSessao();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /sistema/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /carrinho/
+Disallow: /conta/
+Disallow: /*?busca=
+Disallow: /*?sort=
+Disallow: /*?filtro=
+
+Sitemap: https://www.bscloset.com.br/sitemap.xml
