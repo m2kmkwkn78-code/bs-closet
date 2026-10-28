@@ -4,22 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://lgpsvuymjcttywobieuz.supabase.co wss://lgpsvuymjcttywobieuz.supabase.co; form-action 'self'; base-uri 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://lgpsvuymjcttywobieuz.supabase.co wss://lgpsvuymjcttywobieuz.supabase.co; form-action 'self'; base-uri 'self'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@400;500;600&family=Allura&display=swap" rel="stylesheet">
 <title>bs closet — Sistema</title>
 <style>
-:root{--preto:#1f1f1f;--cinza-escuro:#4a4a4a;--cinza:#8c8c8c;--cinza-claro:#e6e6e6;--cinza-fundo:#f4f4f4;--branco:#fff;--ok:#3d6b4f;--alerta:#8a5a2b}
+:root{--preto:#000000;--cinza-escuro:#4a4a4a;--cinza:#A7A7A7;--cinza-claro:#D9B8AF;--cinza-fundo:#EBDCCB;--branco:#ffffff;--bege:#EBDCCB;--marrom:#8B6F5B;--rosa:#D9B8AF;--ok:#8B6F5B;--alerta:#8B6F5B;--fonte-titulo:"Playfair Display",serif;--fonte-texto:"Montserrat",sans-serif;--fonte-slogan:"Allura",cursive}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--cinza-fundo);color:var(--preto);font-size:14px}
+body{font-family:var(--fonte-texto);background:var(--cinza-fundo);color:var(--preto);font-size:14px}
 header{background:var(--preto);color:var(--branco);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
-header h1{font-size:18px;letter-spacing:2px;font-weight:600}
+header h1{font-family:var(--fonte-titulo);font-size:20px;letter-spacing:4px;font-weight:600;color:var(--bege)}
 header button{background:none;border:1px solid #555;color:var(--branco);padding:6px 12px;border-radius:6px;cursor:pointer}
 nav{background:var(--branco);border-bottom:1px solid var(--cinza-claro);display:flex;gap:4px;padding:0 16px;overflow-x:auto}
 nav button{background:none;border:none;padding:14px;cursor:pointer;color:var(--cinza-escuro);border-bottom:2px solid transparent;white-space:nowrap}
-nav button.ativo{color:var(--preto);border-bottom-color:var(--preto);font-weight:600}
+nav button.ativo{color:var(--preto);border-bottom-color:var(--marrom);font-weight:600}
 main{padding:24px;max-width:1200px;margin:0 auto}
 section{display:none}section.ativo{display:block}
-h2{font-size:15px;margin:20px 0 12px;letter-spacing:1px}
+h2{font-family:var(--fonte-titulo);font-size:16px;margin:20px 0 12px;letter-spacing:1px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
 .card{background:var(--branco);border:1px solid var(--cinza-claro);border-radius:8px;padding:16px}
 .card small{color:var(--cinza);display:block;margin-bottom:6px;text-transform:uppercase;font-size:11px;letter-spacing:1px}
@@ -38,14 +41,15 @@ th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--cinza-claro
 th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-transform:uppercase;letter-spacing:.5px}
 .num{text-align:right}
 .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--cinza-claro);color:var(--cinza-escuro)}
-.tag.ok{background:var(--ok);color:var(--branco)}
-.tag.alerta{background:var(--alerta);color:var(--branco)}
+.tag.ok{background:var(--marrom);color:var(--branco)}
+.tag.alerta{background:var(--rosa);color:var(--preto)}
 .vazio{color:var(--cinza);padding:14px;text-align:center}
 .erro{color:#a03030;margin-top:8px;font-size:13px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:760px){.grid2{grid-template-columns:1fr}}
 #login{max-width:340px;margin:80px auto;background:var(--branco);border:1px solid var(--cinza-claro);border-radius:10px;padding:28px}
-#login h1{font-size:18px;letter-spacing:2px;margin-bottom:18px;text-align:center}
+#login h1{font-family:var(--fonte-titulo);font-size:20px;letter-spacing:4px;margin-bottom:18px;text-align:center}
+#login p.slogan{font-family:var(--fonte-slogan);font-size:18px;text-align:center;color:var(--marrom);margin:-10px 0 16px}
 #login form{display:flex;flex-direction:column;gap:12px}
 #login button{width:100%}
 .carrinho-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--cinza-claro)}
@@ -55,6 +59,7 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
 
 <div id="login" style="display:none">
   <h1>BS CLOSET</h1>
+  <p class="slogan">Seu estilo, sem regras.</p>
   <form id="form-login">
     <label>E-mail<input name="email" type="email" required autocomplete="username"></label>
     <label>Senha<input name="senha" type="password" required autocomplete="current-password"></label>
