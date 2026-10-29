@@ -9,6 +9,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Montserrat:wght@400;500;600&family=Allura&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BS CLOSET">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>bs closet — Sistema</title>
 <style>
 :root{--preto:#000000;--cinza-escuro:#4a4a4a;--cinza:#A7A7A7;--cinza-claro:#D9B8AF;--cinza-fundo:#EBDCCB;--branco:#ffffff;--bege:#EBDCCB;--marrom:#8B6F5B;--rosa:#D9B8AF;--ok:#8B6F5B;--alerta:#8B6F5B;--fonte-titulo:"Playfair Display",serif;--fonte-texto:"Montserrat",sans-serif;--fonte-slogan:"Allura",cursive}
@@ -399,6 +405,9 @@ $('form-despesa').onsubmit = async e => {
 };
 
 verificarSessao();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 </script>
 </body>
 </html>
