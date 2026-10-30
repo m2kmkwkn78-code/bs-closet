@@ -85,6 +85,7 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
   <nav>
     <button class="ativo" data-aba="painel">Painel</button>
     <button data-aba="pdv">Vendas (PDV)</button>
+    <button data-aba="vendas">Vendas</button>
     <button data-aba="produtos">Produtos</button>
     <button data-aba="clientes">Clientes</button>
     <button data-aba="despesas">Despesas</button>
@@ -143,6 +144,12 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
       <div id="resumo" class="resumo"></div>
       <div class="erro" id="erro-venda"></div>
     </div>
+  </section>
+
+  <section id="vendas">
+    <h2>VENDAS REGISTRADAS</h2>
+    <table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
+    <tbody id="t-vendas"></tbody></table>
   </section>
 
   <section id="produtos">
@@ -213,6 +220,7 @@ const hojeISO = () => new Date().toISOString().slice(0, 10);
 const mesISO = () => new Date().toISOString().slice(0, 7);
 const carrinho = [];
 let produtosCache = [];
+let ehAdmin = false;
 
 // ===== AUTH =====
 async function entrar(e) {
@@ -235,6 +243,7 @@ async function verificarSessao() {
     return mostrarLogin();
   }
   $('usuario').textContent = perfil.nome + ' · ' + perfil.funcao;
+  ehAdmin = perfil.funcao === 'admin';
   $('login').style.display = 'none';
   $('app').style.display = 'block';
   await carregarTudo();
@@ -255,7 +264,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
 
 // ===== CARGA =====
 async function carregarTudo() {
-  await Promise.all([carregarProdutos(), carregarClientes(), carregarDespesas(), carregarPainel()]);
+  await Promise.all([carregarProdutos(), carregarClientes(), carregarDespesas(), carregarPainel(), carregarVendas()]);
 }
 
 async function carregarProdutos() {
@@ -294,7 +303,7 @@ async function carregarDespesas() {
 }
 
 async function carregarPainel() {
-  const { data: vendas } = await sb.from('vendas').select('total,custo_total,created_at,clientes(nome)').order('created_at', { ascending: false }).limit(500);
+  const { data: vendas } = await sb.from('vendas').select('total,custo_total,created_at,clientes(nome)').eq('status','ativa').order('created_at', { ascending: false }).limit(500);
   const { data: despesas } = await sb.from('despesas').select('valor,data');
   const { data: prods } = await sb.from('produtos').select('qtd,nome,sku,estoque_minimo').eq('ativo', true);
   const v = vendas || [];
@@ -317,6 +326,27 @@ async function carregarPainel() {
     `<tr><td>${esc(p.nome)}</td><td>${esc(p.sku)}</td><td class="num">${p.qtd}</td></tr>`
   ).join('') || '<tr><td colspan="3" class="vazio">Estoque em dia.</td></tr>';
 }
+
+
+async function carregarVendas() {
+  const { data } = await sb.from('vendas').select('id,total,status,created_at,clientes(nome),venda_itens(qtd,produtos(sku))').order('created_at', { ascending: false }).limit(100);
+  $('t-vendas').innerHTML = (data || []).map(v => {
+    const itens = (v.venda_itens || []).map(i => `${i.qtd}x ${esc(i.produtos?.sku)}`).join(', ');
+    const ativa = v.status === 'ativa';
+    const acao = ativa && ehAdmin ? `<button class="sec" onclick="cancelarVenda(${v.id})">Cancelar</button>` : '';
+    return `<tr style="${ativa ? '' : 'opacity:.5'}"><td>${new Date(v.created_at).toLocaleString('pt-BR')}</td>
+      <td>${esc(v.clientes?.nome || 'Consumidor final')}</td><td>${itens}</td>
+      <td class="num">${fmt(v.total)}</td><td><span class="tag ${ativa ? 'ok' : 'alerta'}">${ativa ? 'Ativa' : 'Cancelada'}</span></td><td>${acao}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="vazio">Nenhuma venda.</td></tr>';
+}
+window.cancelarVenda = async id => {
+  const motivo = prompt('Motivo do cancelamento (ex.: teste, desistência do cliente):');
+  if (!motivo || !motivo.trim()) return;
+  if (!confirm('Cancelar esta venda? O estoque será devolvido.')) return;
+  const { error } = await sb.rpc('cancelar_venda', { p_venda_id: id, p_motivo: motivo.trim() });
+  if (error) return alert(error.message);
+  await carregarVendas(); await carregarProdutos(); await carregarPainel();
+};
 
 // ===== PRODUTOS =====
 $('form-produto').onsubmit = async e => {
@@ -438,7 +468,7 @@ $('form-venda').onsubmit = async e => {
   carrinho.length = 0;
   $('inp-desc').value = 0;
   renderCarrinho();
-  await carregarProdutos(); await carregarPainel();
+  await carregarProdutos(); await carregarPainel(); await carregarVendas();
   alert('Venda registrada.');
 };
 
