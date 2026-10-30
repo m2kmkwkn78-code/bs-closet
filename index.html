@@ -277,7 +277,7 @@ async function carregarProdutos() {
     return `<tr><td>${esc(p.sku)}</td><td>${esc(p.nome)}</td><td>${p.tamanho}</td><td>${p.cor}</td>
       <td class="num">${fmt(p.custo)}</td><td class="num">${fmt(p.preco)}</td><td class="num">${p.qtd}</td>
       <td><span class="tag ${status[1]}">${status[0]}</span></td>
-      <td><button class="sec" onclick="ajustarEstoque(${p.id}, 1)">+1</button> <button class="sec" onclick="ajustarEstoque(${p.id}, -1)">-1</button></td></tr>`;
+      <td><button class="sec" onclick="ajustarEstoque(${p.id}, 1)">+1</button> <button class="sec" onclick="ajustarEstoque(${p.id}, -1)">-1</button> ${ehAdmin ? `<button class="sec" onclick="arquivarProduto(${p.id})">Arquivar</button> <button class="sec" onclick="excluirProduto(${p.id})">Excluir</button>` : ''}</td></tr>`;
   }).join('') : '<tr><td colspan="9" class="vazio">Nenhum produto.</td></tr>';
 
   const disp = data.filter(p => p.qtd > 0);
@@ -359,6 +359,22 @@ $('form-produto').onsubmit = async e => {
   });
   if (error) return $('erro-produto').textContent = error.message;
   e.target.reset();
+  await carregarProdutos(); await carregarPainel();
+};
+
+
+window.arquivarProduto = async id => {
+  const p = produtosCache.find(x => x.id === id);
+  if (!confirm(`Arquivar "${p?.nome}"? Ele sai da lista e do PDV, mas o histórico de vendas é mantido.`)) return;
+  const { error } = await sb.from('produtos').update({ ativo: false }).eq('id', id);
+  if (error) return alert(error.message);
+  await carregarProdutos(); await carregarPainel();
+};
+window.excluirProduto = async id => {
+  const p = produtosCache.find(x => x.id === id);
+  if (!confirm(`Excluir "${p?.nome}" de vez? Só funciona se ele nunca foi vendido.`)) return;
+  const { error } = await sb.from('produtos').delete().eq('id', id);
+  if (error) return alert('Não foi possível excluir. Se o produto já teve vendas, use Arquivar. Detalhe: ' + error.message);
   await carregarProdutos(); await carregarPainel();
 };
 
