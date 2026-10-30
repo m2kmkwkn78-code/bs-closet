@@ -169,6 +169,7 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
       </form>
       <div class="erro" id="erro-produto"></div>
     </div>
+    <label style="flex-direction:row;align-items:center;gap:6px;margin:8px 0"><input type="checkbox" id="chk-arq-prod" onchange="carregarProdutos()"> Mostrar arquivados</label>
     <table><thead><tr><th>SKU</th><th>Produto</th><th>Tam.</th><th>Cor</th><th class="num">Custo</th><th class="num">Preço</th><th class="num">Qtd</th><th>Status</th><th></th></tr></thead>
     <tbody id="t-produtos"></tbody></table>
   </section>
@@ -201,7 +202,8 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
       </form>
       <div class="erro" id="erro-despesa"></div>
     </div>
-    <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="num">Valor</th></tr></thead><tbody id="t-despesas"></tbody></table>
+    <label style="flex-direction:row;align-items:center;gap:6px;margin:8px 0"><input type="checkbox" id="chk-arq-desp" onchange="carregarDespesas()"> Mostrar arquivadas</label>
+    <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="num">Valor</th><th></th></tr></thead><tbody id="t-despesas"></tbody></table>
   </section>
 
   </main>
@@ -268,19 +270,21 @@ async function carregarTudo() {
 }
 
 async function carregarProdutos() {
-  const { data, error } = await sb.from('produtos').select('*').eq('ativo', true).order('nome');
+  const { data, error } = await sb.from('produtos').select('*').order('nome');
   if (error) return console.error(error);
   produtosCache = data;
-  $('t-produtos').innerHTML = data.length ? data.map(p => {
+  const mostrarArq = $('chk-arq-prod') && $('chk-arq-prod').checked;
+  const lista = data.filter(p => mostrarArq ? true : p.ativo);
+  $('t-produtos').innerHTML = lista.length ? lista.map(p => {
     const baixo = p.qtd <= p.estoque_minimo;
-    const status = p.qtd === 0 ? ['Esgotado','alerta'] : baixo ? ['Estoque baixo','alerta'] : ['OK','ok'];
+    const status = !p.ativo ? ['Arquivado',''] : p.qtd === 0 ? ['Esgotado','alerta'] : baixo ? ['Estoque baixo','alerta'] : ['OK','ok'];
     return `<tr><td>${esc(p.sku)}</td><td>${esc(p.nome)}</td><td>${p.tamanho}</td><td>${p.cor}</td>
       <td class="num">${fmt(p.custo)}</td><td class="num">${fmt(p.preco)}</td><td class="num">${p.qtd}</td>
       <td><span class="tag ${status[1]}">${status[0]}</span></td>
-      <td><button class="sec" onclick="ajustarEstoque(${p.id}, 1)">+1</button> <button class="sec" onclick="ajustarEstoque(${p.id}, -1)">-1</button> ${ehAdmin ? `<button class="sec" onclick="arquivarProduto(${p.id})">Arquivar</button> <button class="sec" onclick="excluirProduto(${p.id})">Excluir</button>` : ''}</td></tr>`;
+      <td><button class="sec" onclick="ajustarEstoque(${p.id}, 1)">+1</button> <button class="sec" onclick="ajustarEstoque(${p.id}, -1)">-1</button> ${ehAdmin ? (p.ativo ? `<button class="sec" onclick="arquivarProduto(${p.id})">Arquivar</button> <button class="sec" onclick="excluirProduto(${p.id})">Excluir</button>` : `<button class="sec" onclick="restaurarProduto(${p.id})">Restaurar</button> <button class="sec" onclick="excluirProduto(${p.id})">Excluir</button>`) : ''}</td></tr>`;
   }).join('') : '<tr><td colspan="9" class="vazio">Nenhum produto.</td></tr>';
 
-  const disp = data.filter(p => p.qtd > 0);
+  const disp = data.filter(p => p.ativo && p.qtd > 0);
   $('sel-produto').innerHTML = disp.length
     ? disp.map(p => `<option value="${p.id}">${esc(p.sku)} — ${esc(p.nome)} ${p.tamanho} ${p.cor} (${p.qtd} un) · ${fmt(p.preco)}</option>`).join('')
     : '<option value="">Sem estoque disponível</option>';
@@ -296,15 +300,37 @@ async function carregarClientes() {
 }
 
 async function carregarDespesas() {
-  const { data } = await sb.from('despesas').select('*').order('data', { ascending: false }).limit(200);
-  $('t-despesas').innerHTML = (data || []).map(d =>
-    `<tr><td>${d.data}</td><td>${esc(d.descricao)}</td><td>${d.categoria}</td><td class="num">${fmt(d.valor)}</td></tr>`
-  ).join('') || '<tr><td colspan="4" class="vazio">Nenhuma despesa.</td></tr>';
+  const { data } = await sb.from('despesas').select('*').order('data', { ascending: false }).limit(300);
+  const mostrarArq = $('chk-arq-desp') && $('chk-arq-desp').checked;
+  const lista = (data || []).filter(d => mostrarArq ? true : d.ativo);
+  $('t-despesas').innerHTML = lista.map(d => {
+    const acoes = !ehAdmin ? '' : d.ativo
+      ? `<button class="sec" onclick="arquivarDespesa(${d.id})">Arquivar</button> <button class="sec" onclick="excluirDespesa(${d.id})">Excluir</button>`
+      : `<button class="sec" onclick="restaurarDespesa(${d.id})">Restaurar</button> <button class="sec" onclick="excluirDespesa(${d.id})">Excluir</button>`;
+    return `<tr style="${d.ativo ? '' : 'opacity:.5'}"><td>${d.data}</td><td>${esc(d.descricao)}</td><td>${d.categoria}</td><td class="num">${fmt(d.valor)}</td><td>${acoes}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="vazio">Nenhuma despesa.</td></tr>';
 }
+window.arquivarDespesa = async id => {
+  if (!confirm('Arquivar esta despesa? Ela sai dos totais, mas o registro é mantido.')) return;
+  const { error } = await sb.from('despesas').update({ ativo: false }).eq('id', id);
+  if (error) return alert(error.message);
+  await carregarDespesas(); await carregarPainel();
+};
+window.restaurarDespesa = async id => {
+  const { error } = await sb.from('despesas').update({ ativo: true }).eq('id', id);
+  if (error) return alert(error.message);
+  await carregarDespesas(); await carregarPainel();
+};
+window.excluirDespesa = async id => {
+  if (!confirm('Excluir esta despesa de vez?')) return;
+  const { error } = await sb.from('despesas').delete().eq('id', id);
+  if (error) return alert(error.message);
+  await carregarDespesas(); await carregarPainel();
+};
 
 async function carregarPainel() {
   const { data: vendas } = await sb.from('vendas').select('total,custo_total,created_at,clientes(nome)').eq('status','ativa').order('created_at', { ascending: false }).limit(500);
-  const { data: despesas } = await sb.from('despesas').select('valor,data');
+  const { data: despesas } = await sb.from('despesas').select('valor,data').eq('ativo', true);
   const { data: prods } = await sb.from('produtos').select('qtd,nome,sku,estoque_minimo').eq('ativo', true);
   const v = vendas || [];
   const hj = hojeISO(), mes = mesISO();
@@ -367,6 +393,11 @@ window.arquivarProduto = async id => {
   const p = produtosCache.find(x => x.id === id);
   if (!confirm(`Arquivar "${p?.nome}"? Ele sai da lista e do PDV, mas o histórico de vendas é mantido.`)) return;
   const { error } = await sb.from('produtos').update({ ativo: false }).eq('id', id);
+  if (error) return alert(error.message);
+  await carregarProdutos(); await carregarPainel();
+};
+window.restaurarProduto = async id => {
+  const { error } = await sb.from('produtos').update({ ativo: true }).eq('id', id);
   if (error) return alert(error.message);
   await carregarProdutos(); await carregarPainel();
 };
