@@ -58,6 +58,9 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
 #login p.slogan{font-family:var(--fonte-slogan);font-size:18px;text-align:center;color:var(--marrom);margin:-10px 0 16px}
 #login form{display:flex;flex-direction:column;gap:12px}
 #login button{width:100%}
+.resumo{margin-top:12px;border-top:1px solid var(--cinza-claro);padding-top:10px;font-size:13px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.resumo div{background:var(--cinza-fundo);padding:8px;border-radius:6px}
+.resumo b{display:block;font-size:16px;margin-top:2px}
 .carrinho-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--cinza-claro)}
 </style>
 </head>
@@ -125,13 +128,19 @@ th{background:var(--cinza-fundo);font-size:12px;color:var(--cinza-escuro);text-t
         <label>Cliente<select id="sel-cliente"><option value="">Consumidor final</option></select></label>
         <label>Pagamento
           <select id="sel-pag">
-            <option value="pix">Pix</option><option value="credito">Cartão crédito</option>
-            <option value="debito">Cartão débito</option><option value="dinheiro">Dinheiro</option>
+            <option value="pix">Pix</option>
+            <option value="debito">Débito</option>
+            <option value="credito">Crédito à vista</option>
+            <option value="credito_parc">Crédito parcelado</option>
           </select>
+        </label>
+        <label id="lbl-parc" style="display:none">Parcelas
+          <select id="sel-parc"></select>
         </label>
         <label>Desconto (%)<input id="inp-desc" type="number" min="0" max="100" value="0"></label>
         <button class="acao" type="submit">Finalizar venda</button>
       </form>
+      <div id="resumo" class="resumo"></div>
       <div class="erro" id="erro-venda"></div>
     </div>
   </section>
@@ -332,15 +341,69 @@ window.ajustarEstoque = async (id, delta) => {
   await carregarProdutos(); await carregarPainel();
 };
 
+
+// ===== TAXAS DA MAQUININHA (Point Pro 3) =====
+const TAXAS = {
+  pix: 0,
+  debito: 0.74,
+  credito: 0.74,          // crédito à vista
+  parcelado: 2.89,        // parcelado 2x a 18x: taxa paga pelo lojista (cliente paga os juros)
+  parcelas_min: 2,
+  parcelas_max: 18
+};
+function taxaSelecionada() {
+  const pag = $('sel-pag').value;
+  if (pag === 'pix') return TAXAS.pix;
+  if (pag === 'debito') return TAXAS.debito;
+  if (pag === 'credito') return TAXAS.credito;
+  return TAXAS.parcelado;
+}
+function atualizarParcelas() {
+  const parc = $('sel-pag').value === 'credito_parc';
+  $('lbl-parc').style.display = parc ? 'flex' : 'none';
+  if (parc && !$('sel-parc').options.length) {
+    let h = '';
+    for (let n = TAXAS.parcelas_min; n <= TAXAS.parcelas_max; n++) h += `<option value="${n}">${n}x</option>`;
+    $('sel-parc').innerHTML = h;
+  }
+  renderCarrinho();
+}
+$('sel-pag').onchange = atualizarParcelas;
+$('sel-parc').onchange = renderCarrinho;
+$('inp-desc').oninput = renderCarrinho;
+const pct = v => (isFinite(v) ? v : 0).toFixed(1).replace('.', ',') + '%';
+
 // ===== PDV =====
 function renderCarrinho() {
-  if (!carrinho.length) { $('carrinho').innerHTML = '<div class="vazio">Carrinho vazio.</div>'; return; }
-  let total = 0;
+  if (!carrinho.length) {
+    $('carrinho').innerHTML = '<div class="vazio">Carrinho vazio.</div>';
+    $('resumo').innerHTML = '';
+    return;
+  }
+  let bruto = 0, custo = 0;
   $('carrinho').innerHTML = carrinho.map((it, i) => {
-    total += it.preco * it.qtd;
-    return `<div class="carrinho-item"><span>${it.qtd}x ${esc(it.nome)} (${esc(it.sku)})</span>
-      <span>${fmt(it.preco * it.qtd)} <button class="sec" onclick="removerItem(${i})">✕</button></span></div>`;
-  }).join('') + `<div style="text-align:right;margin-top:8px"><strong>Subtotal: ${fmt(total)}</strong></div>`;
+    const sub = it.preco * it.qtd, csub = it.custo * it.qtd;
+    bruto += sub; custo += csub;
+    const mb = sub ? (sub - csub) / sub * 100 : 0;
+    return `<div class="carrinho-item"><span>${it.qtd}x ${esc(it.nome)} (${esc(it.sku)})<br>
+      <small>Venda ${fmt(it.preco)} · Custo ${fmt(it.custo)} · Margem ${pct(mb)}</small></span>
+      <span>${fmt(sub)} <button class="sec" onclick="removerItem(${i})">✕</button></span></div>`;
+  }).join('');
+
+  const desc = Math.min(100, Math.max(0, +$('inp-desc').value || 0));
+  const venda = bruto * (1 - desc / 100);
+  const margemBruta = venda ? (venda - custo) / venda * 100 : 0;
+  const taxa = taxaSelecionada();
+  const valorTaxa = venda * taxa / 100;
+  const lucroLiq = venda - valorTaxa - custo;
+  const margemLiq = venda ? lucroLiq / venda * 100 : 0;
+  $('resumo').innerHTML = `
+    <div>Venda<b>${fmt(venda)}</b></div>
+    <div>Custo<b>${fmt(custo)}</b></div>
+    <div>Margem bruta<b>${pct(margemBruta)}</b></div>
+    <div>Taxa (${pct(taxa)})<b>${fmt(valorTaxa)}</b></div>
+    <div>Lucro líquido<b>${fmt(lucroLiq)}</b></div>
+    <div>Margem líquida<b>${pct(margemLiq)}</b></div>`;
 }
 window.removerItem = i => { carrinho.splice(i, 1); renderCarrinho(); };
 
@@ -355,7 +418,7 @@ $('form-item').onsubmit = e => {
   if (qtd < 1 || jaNoCarrinho + qtd > p.qtd) return $('erro-venda').textContent = `Estoque disponível: ${p.qtd - jaNoCarrinho}.`;
   const existente = carrinho.find(c => c.produto_id === id);
   if (existente) existente.qtd += qtd;
-  else carrinho.push({ produto_id: id, qtd, nome: p.nome, sku: p.sku, preco: Number(p.preco) });
+  else carrinho.push({ produto_id: id, qtd, nome: p.nome, sku: p.sku, preco: Number(p.preco), custo: Number(p.custo) });
   renderCarrinho();
 };
 
@@ -366,7 +429,7 @@ $('form-venda').onsubmit = async e => {
   const btn = e.target.querySelector('button'); btn.disabled = true;
   const { error } = await sb.rpc('registrar_venda', {
     p_cliente_id: $('sel-cliente').value ? +$('sel-cliente').value : null,
-    p_pagamento: $('sel-pag').value,
+    p_pagamento: $('sel-pag').value === 'credito_parc' ? 'credito' : $('sel-pag').value,
     p_desconto: +$('inp-desc').value || 0,
     p_itens: carrinho.map(c => ({ produto_id: c.produto_id, qtd: c.qtd }))
   });
